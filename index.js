@@ -86,7 +86,8 @@ var AMQP = module.exports = winston.transports.AMQP = function (options) {
 		host: config.host.hostname,
 		port: config.host.port,
 		login: config.host.auth.split(":")[0],
-		password: config.host.auth.split(":")[1]
+		password: config.host.auth.split(":")[1],
+		vhost: config.vhost
 	});
 
 	connection.on('ready', function () {

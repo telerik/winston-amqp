@@ -27,6 +27,7 @@ The AMQP transport takes the following options:
 * name:				The name of the logger. Defaults to the final path/script, e.g. "myapp/index.js". The name is included in the AMQP message
 * level:			The level of the logger
 * host:				The location of the AMQP server. See below for a description of the defaults and format of this value:
+* vhost:			The AMQP vhost name
 * exchange:			The AMQP exchange name. This is optional is overrides the value specified by the 'host' option
 * routingKey:		The AMQP routingKey. This is optional is overrides the value specified by the 'host' option. A falsy value causes the routingKey to be set from the 'name' option.
 * exchangeOptions: 	Optional. As specified by 'connection.exchange' in [https://www.npmjs.com/package/amqp] 
