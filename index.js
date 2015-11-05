@@ -89,7 +89,7 @@ var AMQP = module.exports = winston.transports.AMQP = function (options) {
 		password: config.host.auth.split(":")[1],
 		vhost: config.vhost
 	});
-
+	this.rabbitmqConnection = connection;
 	connection.on('ready', function () {
 		connection.exchange(config.exchange, config.exchangeOptions, function (exchange) {
 			publish = function(logMessage, callback){
@@ -136,6 +136,10 @@ AMQP.prototype.logWhenDisabled = function(level, msg, meta, callback) {
 		meta = undefined;
 	}
 	callback(null, true);
+}
+
+AMQP.prototype.close = function() {
+	this.rabbitmqConnection.destroy();
 }
 
 AMQP.prototype.log = function (level, msg, meta, callback) {
