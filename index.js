@@ -7,15 +7,15 @@ var URL = require('url');
 var path = require('path');
 var amqp = require('amqp');
 
-var publish,buffer = [] ;
+var publish,buffer = [];
 
-var host = require('os').hostname ;
+var host = require('os').hostname;
 
 function getProcessName() {
 	try {
-		return require(path.resolve(require.main.filename,".."+path.sep+"package.json")).name ;
+		return require(path.resolve(require.main.filename,".."+path.sep+"package.json")).name;
 	} catch (ex) {
-		return "process-"+process.pid ;
+		return "process-"+process.pid;
 	}
 };
 
@@ -24,8 +24,8 @@ var winston = require('winston');
 function assign(d,s) {
 	if (s)
 		Object.keys(s).forEach(function(k){
-			d[k] = s[k] ;
-		}) ;
+			d[k] = s[k];
+		});
 }
 
 /**
@@ -40,7 +40,7 @@ function assign(d,s) {
  */ 
 var AMQP = module.exports = winston.transports.AMQP = function (options) {
 	winston.Transport.call(this, options);
-	var self = this ;
+	var self = this;
 	var config = {
 			name:getProcessName(),
 			bufferMax:1000,
@@ -56,28 +56,29 @@ var AMQP = module.exports = winston.transports.AMQP = function (options) {
 				contentType: 'application/json',
 				deliveryMode: 2 	// Non-persistent (1) or persistent (2)
 			}
-	} ;
+	};
 
-	assign(config,options) ;
+	assign(config,options);
 
 	if (typeof config.host==='string')
-		config.host = URL.parse(config.host) ;
+		config.host = URL.parse(config.host);
 	if (config.host.protocol!=='amqp:')
-		throw new Error("Incorrect protocol "+config.protocol) ;
+		throw new Error("Incorrect protocol "+config.protocol);
 	if (!config.exchange)
 		config.exchange = config.host.pathname.split("/")[1] || 'winston';
 	if (!config.routingKey)
-		config.routingKey = config.host.pathname.split("/")[2] ;
+		config.routingKey = config.host.pathname.split("/")[2];
 
 	// Name this logger
-	this.name = config.name ;
+	this.name = config.name;
 	// Set the level from your options
-	this.level = config.level ;
-	this.bufferMax = config.bufferMax ;
+	this.level = config.level;
+	this.bufferMax = config.bufferMax;	
+	this.flattenMetadata= config.flattenMetadata;
 
 	if (!config.enabled) {
-		this.log = this.logWhenDisabled ;
-		return ;
+		this.log = this.logWhenDisabled;
+		return;
 	}
 	 
 
@@ -99,27 +100,27 @@ var AMQP = module.exports = winston.transports.AMQP = function (options) {
 						loggerName:"winston",
 						name:self.name
 				};
-				assign(message,logMessage) ;
+				assign(message,logMessage);
 
 				exchange.publish(config.routingKey || message.name, 
 						message, 
 						config.publishOptions, 
 						function(err){
-					callback && callback(err?new Error():null,!err) ;
+					callback && callback(err?new Error():null,!err);
 				});
 			};
 			// Now we're connected, play back any buffered log events
 			if (buffer) {
 				for (var i=0; i<buffer.length; i++) {
-					buffer[i].logger.log.apply(buffer[i].logger,buffer[i].args) ;
+					buffer[i].logger.log.apply(buffer[i].logger,buffer[i].args);
 				}
-				buffer = null ;
+				buffer = null;
 			}
 		});
 	});
 
 	connection.on('error', function (err) {
-		self.emit('error',err) ;
+		self.emit('error',err);
 	});
 };
 
@@ -151,12 +152,12 @@ AMQP.prototype.log = function (level, msg, meta, callback) {
 	}
 	
 	if (meta && Object.keys(meta).length==0)
-		meta = undefined ;
+		meta = undefined;
 	
 	if (!publish) {
-		buffer.push({logger:this,args:[level,msg,meta]}) ;
+		buffer.push({logger:this,args:[level,msg,meta]});
 		if (this.bufferMax < buffer.length) {
-			buffer.splice(0,(buffer.length/2)|1) ;
+			buffer.splice(0,(buffer.length/2)|1);
 			callback && callback(new Error("Winston AMQP transport: failed to connect"));
 		} else {
 			callback && callback(null, true);
@@ -166,9 +167,18 @@ AMQP.prototype.log = function (level, msg, meta, callback) {
 		var o = {
 			level:level,
 			message:msg
-		} ;
-		if (meta)
-			o.meta = meta ;
-		publish(o,callback) ;
+		};
+		if (meta){
+            if(this.flattenMetadata) {
+                for (var prop in meta) {
+                    if (meta.hasOwnProperty(prop)) {
+                        o[prop] = meta[prop];
+                    }
+                }
+            }else {
+                o.meta = meta;
+            }
+        }
+		publish(o,callback);
 	}
 };
