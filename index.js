@@ -95,10 +95,8 @@ var AMQP = module.exports = winston.transports.AMQP = function (options) {
 		connection.exchange(config.exchange, config.exchangeOptions, function (exchange) {
 			publish = function(logMessage, callback){
 				var message = {
-						logHostName:host(),
 						timestamp:Date.now(),
-						loggerName:"winston",
-						name:self.name
+						loggerName:"winston"
 				};
 				assign(message,logMessage);
 
